@@ -23,6 +23,12 @@ object List {
     def apply[A](as: A*): List[A] =
         if (as.isEmpty) Nil
         else Cons(as.head, apply(as.tail: _*))
+
+    def append[A](xs1:List[A], xs2:List[A]) : List[A] =
+        xs1 match {
+            case Nil => xs2
+            case Cons(h,t) => Cons(h, append(t, xs2))
+        }
 }
 object Chapter3 {
     /** Exercise 3.1 - Pattern matching*/
@@ -36,14 +42,13 @@ object Chapter3 {
         }
     }
 
-
     /** Exercise 3.2 - Implement a tail function
       *
       * Notes: If the function consists of just a single statement then it is good practice
       * to put it on the same line as the method signature, rather than introducing another level of nesting.
       * We could also throw an exception on the Nil case, but this is not the functional way.
       * So Nil is returned instead. */
-    def e32[A](xs : List[A]) : List[A] = xs match {
+    def tail[A](xs : List[A]) : List[A] = xs match {
         case Nil => Nil
         case Cons(_, t) => t
     }
@@ -52,20 +57,49 @@ object Chapter3 {
       *
       * Notes: The Nil case in this function, however, makes sense to return a new list with
       * just the head set and no tail rather than returning Nil */
-    def e33[A](h : A, xs : List[A]) : List[A] = xs match {
+    def replaceHead[A](h : A, xs : List[A]) : List[A] = xs match {
         case Nil => Cons(h, Nil)
         case Cons(_, t) => Cons(h, t)
     }
 
     /** Exercise 3.4 - Generalize exercise 3.2 to drop n number of elements and return the tail. */
-    def e34[A](n : Int, xs : List[A]) : List[A] = xs match {
-        case Nil => Nil
-        case Cons(_, t) => {
-            @annotation.tailrec
-            def go(x : Int, ys : List[A]) : List[A] =
-                if(x == n) t
-                else go(x + 1, t)
-            go(1, t)
+    /** This was my original attempt.
+      * The below version is a much better solution, the inner recursive function is not required. */
+    def drop[A](n : Int, xs : List[A]) : List[A] = {
+        @annotation.tailrec
+        def go(x : Int, ys : List[A]) : List[A] = ys match {
+            case Nil => Nil
+            case Cons(_, t) =>
+                if(x == n) {
+                    println("x:", x, "n:", n)
+                    t
+                } else {
+                    println("x:", x, "n:", n)
+                    go(x + 1, t)
+                }
         }
+        go(0, xs)
+    }
+    def drop[A](xs : List[A], n : Int) : List[A] = {
+        if(n == 0) xs
+        else xs match {
+            case Nil => Nil
+            case Cons(_, t) => drop(t, n-1)
+        }
+    }
+
+    /** Exercise 3.5 - Implement a dropWhile function which drops the n number of  */
+    def dropWhile[A](xs : List[A], f : A => Boolean) : List[A] = xs match {
+        case Cons(h, t) if(f(h)) => dropWhile(t, f)
+        case _ => xs
+    }
+
+    /** Exercise 3.6 - Implement a function that returns all but the last element */
+    /** Note: this is NOT a constant time (i.e. not very efficient) function since we need to copy
+      * all the initial elements into new Lists. So the bigger the list the longer this function will take to process.*/
+    def initial[A](xs:List[A]) : List[A] = xs match {
+        case Nil => Nil
+        case Cons(_, Nil) => Nil
+        case Cons(h,t) => Cons(h, initial(t))
     }
 }
