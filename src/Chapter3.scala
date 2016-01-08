@@ -43,6 +43,7 @@ object List {
         foldRight(ns, 1.0)(_*_)
     }
 }
+
 object Chapter3 {
     /** Exercise 3.1 - Pattern matching*/
     def e31(xs : List[Int]) : Int = {
@@ -213,6 +214,84 @@ object Chapter3 {
     def map[A,B](as:List[A])(f : (A) => B) : List[B] =
         foldLeft(as, Nil:List[B])((a,bs) => Cons(f(a), bs))
 
+    /** Exercise 3.19 - write a filter function that ignores elements that do not return true by the predicate */
     def filter[A](as:List[A])(f : (A) => Boolean) : List[A] =
         foldLeft(as, Nil:List[A]) ((x,xs) => if(f(x)) Cons(x,xs) else xs)
+
+    /** Exercise 3.20 - write a flatMap function */
+    def flatMap[A,B](as:List[A])(f : A => List[B]) : List[B] =
+        concat(map(as)(f))
+
+    /** Exercise 3.21 - use flatMap to filter */
+    def filter_1[A](as:List[A])(f : A => Boolean) : List[A] =
+        flatMap(as)(a => if (f(a)) List(a) else Nil)
+
+    /** Exercise 3.21 - write a function that adds each head of the two lists together and creates a new list
+      * of the aggregates.
+      * We can create Using pattern matching to create a Tuple pair of lists
+      */
+    def addPairs(as:List[Int], bs:List[Int]) : List[Int] = (as,bs) match {
+        case (_,Nil) => Nil
+        case (Nil, _) => Nil
+        case (Cons(x,xs),Cons(y,ys)) => Cons(x + y, addPairs(xs, ys))
+    }
+
+    def zipWith[A,B](as:List[A], bs:List[A])(f : (A,A) => B) : List[B] = (as,bs) match {
+        case (_,Nil) => Nil:List[B]
+        case (Nil, _) => Nil:List[B]
+        case (Cons(h1,t1), Cons(h2, t2)) => Cons(f(h1, h2), zipWith(t1,t2)(f))
+    }
+}
+
+
+sealed trait Tree[+A]
+case class Leaf[A](value : A) extends Tree[A]
+case class Branch[A](left : Tree[A], right : Tree[A]) extends Tree[A]
+
+object Tree {
+
+    def foldLeft[A,B](t : Tree[A], z : B)(f : A => B) : B = t match {
+        case Leaf(v) => f(v)
+        //case Branch(l,r) =>
+        case Branch(l, r) => ((a:Tree[A]) => (b:B) => foldLeft(a, b)(f)) (l)(foldLeft(r, z)(f))
+    }
+
+    /** Exercise 3.25 - count all the branches and leaves */
+    def size[A](t : Tree[A]) : Int = t match {
+        case Leaf(v) => 1
+        case Branch(l, r) => size(l) + size(r) + 1
+    }
+
+    /** Exercise 3.26 - find the largest leaf value */
+    def maximum(t : Tree[Int]) : Int = t match {
+        case Leaf(v) => v
+        case Branch(l, r) => maximum(l) max maximum(r)
+    }
+
+    /** Exercise 3.27 - find the deepest path to any leaf */
+    def depth[A](t : Tree[A]) : Int = t match {
+        case Leaf(_) => 0
+        case Branch(l,r) => 1 + depth(l) + depth(r)
+    }
+
+    /** Exercise 3.28 - write a map function */
+    def map[A,B](t : Tree[A])(f : A => B) : Tree[B] = t match {
+        case Leaf(v) => Leaf(f(v))
+        case Branch(l,r) => Branch(map(l)(f), map(r)(f))
+    }
+
+    /** Exercise 3.29 - Write a fold function and update size, maximum and depth to use the fold. */
+    def fold[A,B](t : Tree[A])(f : A => B)(g : (B,B) => B) : B = t match {
+        case Leaf(v) => f(v)
+        case Branch(l, r) => g((fold(l)(f)(g)), (fold(r)(f)(g)))
+    }
+
+    def size1[A](t : Tree[A]) : Int =
+        fold(t) (a => 1) (1 + _ + _)
+    def maximum1(t : Tree[Int]) : Int =
+        fold(t) (a => a) (_ max _)
+    def depth1[A](t : Tree[A]) : Int =
+        fold(t) (a => 0) ((l,r) => 1 + l max  r)
+    def map1[A,B](t : Tree[A])(f : A => B) : Tree[B] =
+        fold(t) (a => Leaf(f(a)) : Tree[B]) (Branch(_,_))
 }
