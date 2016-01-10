@@ -1,46 +1,30 @@
+//package fp101.errorhandling
 /**
   * Chapter 4 - Handling errors without exceptions
   */
-/**
 sealed trait Nullable[+A] {
     /** Exercise 4.1 - Implement helpful functions */
-    /**
-    def map[B](f : A => B) : Option2[B] = this match {
-        case Some2(a) => Some2(f(a))
-        case _ => None2
+
+    def map[B](f : A => B) : Nullable[B] = this match {
+        case Value(a) => Value(f(a))
+        case _ => Empty
     }
 
-    def flatMap[B](f : A => Option2[B]) : Option2[B] =
-        map(f) getOrElse None2
-    */
+    def flatMap[B](f : A => Nullable[B]) : Nullable[B] =
+        map(f) getOrElse Empty
+
     def getOrElse[B >: A](default: => B) : B = this match {
-        case Empty => default
         case Value(a) => a
+        case Empty => default
     }
-    /**
-    def orElse[B >: A](ob: => Option2[B]) : Option2[B] =
-        this map(Some2(_)) getOrElse(ob)
 
-    def filter(f : A => Boolean) : Option2[A] = this match {
-        case Some2(a) if f(a) => this
-        case None2 => None2
+    def orElse[B >: A](ob: => Nullable[B]) : Nullable[B] =
+        this map(Value(_)) getOrElse(ob)
+
+    def filter(f : A => Boolean) : Nullable[A] = this match {
+        case Value(a) if f(a) => this
+        case Empty => Empty
      }
-      */
-}
-  */
-sealed trait Nullable[+A] {
-    def get[B >: A](default: => B) : B = this match {
-        case Value(v) => v
-        case _ => default
-    }
 }
 case class Value[+A](value: A) extends Nullable[A]
-case object Null extends Nullable[Nothing]
-
-
-/**
-def get[B >: A](default: => B) : B = this match{
-        case Value(v) => v
-        case Null => default
-    }
-  * */
+case object Empty extends Nullable[Nothing]
